@@ -5,6 +5,10 @@ import android.Manifest.permission.POST_NOTIFICATIONS
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.app.job.JobWorkItem
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -24,6 +28,8 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
+    private var page = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -35,8 +41,22 @@ class MainActivity : AppCompatActivity() {
         binding.foregroundService.setOnClickListener {
             startForegroundService(MyForegroundService.newIntent(this))
         }
-        binding.intentService.setOnClickListener{
+        binding.intentService.setOnClickListener {
             startForegroundService(MyIntentService.newIntent(this))
         }
+        binding.jobDispatcher.setOnClickListener {
+            val componentName = ComponentName(this, MyJobService::class.java)
+            val jobInfo = JobInfo.Builder(MyJobService.JOB_ID, componentName)
+                .setRequiresCharging(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+                .build()
+
+            val jobScheduler = getSystemService(JOB_SCHEDULER_SERVICE) as JobScheduler
+
+            val intent = MyJobService.newIntent(page++)
+            jobScheduler.enqueue(jobInfo, JobWorkItem(intent))
+        }
     }
+
+
 }
